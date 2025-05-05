@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Return Book - Bibliotheca LMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('circulation.index') }}">Circulation</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Return Book</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Return Book</h2>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> You are about to return the following book:
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <h4>{{ circulation.book.title }}</h4>
+                                <p class="text-muted">by {{ circulation.book.author }}</p>
+                                <p><strong>ISBN:</strong> {{ circulation.book.isbn }}</p>
+                                <p><strong>Checked out by:</strong> {{ circulation.member.full_name }}</p>
+                                <p><strong>Checkout Date:</strong> {{ circulation.checkout_date.strftime('%B %d, %Y') }}</p>
+                                <p><strong>Due Date:</strong> {{ circulation.due_date.strftime('%B %d, %Y') }}</p>
+                                
+                                {% if circulation.is_overdue() %}
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-exclamation-triangle me-2"></i> This book is <strong>overdue</strong>.
+                                        <p class="mb-0 mt-2">
+                                            <strong>Estimated Fine:</strong> ${{ circulation.calculate_fine() }}
+                                        </p>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle me-2"></i> This book is being returned on time.
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                {% if circulation.book.cover_image %}
+                                    <img src="{{ circulation.book.cover_image }}" class="img-fluid rounded" alt="{{ circulation.book.title }}">
+                                {% else %}
+                                    <div class="bg-light rounded d-flex justify-content-center align-items-center" style="height: 150px;">
+                                        <i class="fas fa-book fa-5x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="POST" action="{{ url_for('circulation.return_book', circulation_id=circulation.id) }}">
+                    <div class="mb-3">
+                        <label for="condition" class="form-label">Book Condition</label>
+                        <select class="form-select" id="condition" name="condition">
+                            <option value="good" selected>Good - No damage</option>
+                            <option value="fair">Fair - Minor wear and tear</option>
+                            <option value="damaged">Damaged - Requires attention</option>
+                            <option value="lost">Lost - Book not returned</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any notes about the book's condition or return process"></textarea>
+                    </div>
+                    
+                    {% if circulation.is_overdue() %}
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="fine_paid" name="fine_paid">
+                            <label class="form-check-label" for="fine_paid">
+                                Fine paid (${{ circulation.calculate_fine() }})
+                            </label>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('circulation.index') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Return Book</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+/* General styling */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+/* Card styling */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Book catalog styling */
+.book-card {
+    height: 100%;
+}
+
+.book-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.book-list-item {
+    transition: all 0.2s ease;
+}
+
+.book-list-item:hover {
+    transform: translateY(-3px);
+}
+
+/* Dashboard stats */
+.stats-card {
+    border-left: 4px solid;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-card.primary {
+    border-left-color: var(--bs-primary);
+}
+
+.stats-card.success {
+    border-left-color: var(--bs-success);
+}
+
+.stats-card.warning {
+    border-left-color: var(--bs-warning);
+}
+
+.stats-card.danger {
+    border-left-color: var(--bs-danger);
+}
+
+.stats-icon {
+    opacity: 0.8;
+    font-size: 2.5rem;
+}
+
+/* Form styling */
+.required-field::after {
+    content: "*";
+    color: red;
+    margin-left: 4px;
+}
+
+/* Overdue highlight */
+.overdue {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Due date highlighting */
+.due-soon {
+    color: #fd7e14;
+}
+
+/* Availability indicators */
+.available {
+    color: var(--bs-success);
+}
+
+.unavailable {
+    color: var(--bs-danger);
+}
+
+/* Member profile avatar */
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    background-color: var(--bs-primary);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+
+.avatar-initials {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 500;
+}
+
+.avatar-circle-sm {
+    width: 30px;
+    height: 30px;
+    background-color: var(--bs-primary);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.avatar-initials-sm {
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Book view styles */
+.book-cover {
+    max-height: 300px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Print styles */
+@media print {
+    nav, footer, .no-print, .btn-print {
+        display: none !important;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    
+    body {
+        font-size: 12pt;
+    }
+    
+    .table {
+        font-size: 10pt;
+    }
+    
+    .card {
+        border: none;
+    }
+}

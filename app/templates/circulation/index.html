@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Circulation - Bibliotheca LMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{% if current_user.is_admin %}Circulation Management{% else %}My Loans{% endif %}</h1>
+    
+    {% if current_user.is_admin %}
+    <div>
+        <a href="{{ url_for('circulation.checkout') }}" class="btn btn-primary">
+            <i class="fas fa-sign-out-alt me-1"></i> New Checkout
+        </a>
+        <a href="{{ url_for('circulation.overdue') }}" class="btn btn-danger ms-2">
+            <i class="fas fa-exclamation-circle me-1"></i> Overdue Books
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<ul class="nav nav-tabs mb-4" id="circulationTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="current-tab" data-bs-toggle="tab" data-bs-target="#current-loans" type="button" role="tab" aria-controls="current-loans" aria-selected="true">
+            Current Loans
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#loan-history" type="button" role="tab" aria-controls="loan-history" aria-selected="false">
+            Loan History
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="circulationTabContent">
+    <!-- Current Loans Tab -->
+    <div class="tab-pane fade show active" id="current-loans" role="tabpanel" aria-labelledby="current-tab">
+        {% set active_loans = [] %}
+        {% for c in circulations %}
+            {% if c.return_date is none %}
+                {% set active_loans = active_loans + [c] %}
+            {% endif %}
+        {% endfor %}
+        
+        {% if active_loans %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Member</th>
+                            <th>Checkout Date</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for circ in active_loans %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('books.view', book_id=circ.book.id) }}">{{ circ.book.title }}</a>
+                                    <small class="text-muted d-block">{{ circ.book.author }}</small>
+                                </td>
+                                <td>
+                                    {% if current_user.is_admin %}
+                                        <a href="{{ url_for('members.view', member_id=circ.member.id) }}">{{ circ.member.full_name }}</a>
+                                    {% else %}
+                                        {{ circ.member.full_name }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ circ.checkout_date.strftime('%Y-%m-%d') }}</td>
+                                <td class="due-date" data-date="{{ circ.due_date }}">
+                                    {{ circ.due_date.strftime('%Y-%m-%d') }}
+                                </td>
+                                <td>
+                                    {% if circ.is_overdue() %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('circulation.return_book', circulation_id=circ.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-sign-in-alt"></i> Return
+                                    </a>
+                                    {% if not circ.is_overdue() %}
+                                        <form action="{{ url_for('circulation.renew', circulation_id=circ.id) }}" 
+                                              method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-secondary">
+                                                <i class="fas fa-sync"></i> Renew
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No active loans found.
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Loan History Tab -->
+    <div class="tab-pane fade" id="loan-history" role="tabpanel" aria-labelledby="history-tab">
+        {% set past_loans = [] %}
+        {% for c in circulations %}
+            {% if c.return_date is not none %}
+                {% set past_loans = past_loans + [c] %}
+            {% endif %}
+        {% endfor %}
+        
+        {% if past_loans %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Member</th>
+                            <th>Checkout Date</th>
+                            <th>Due Date</th>
+                            <th>Return Date</th>
+                            <th>Fine</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for circ in past_loans %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('books.view', book_id=circ.book.id) }}">{{ circ.book.title }}</a>
+                                    <small class="text-muted d-block">{{ circ.book.author }}</small>
+                                </td>
+                                <td>
+                                    {% if current_user.is_admin %}
+                                        <a href="{{ url_for('members.view', member_id=circ.member.id) }}">{{ circ.member.full_name }}</a>
+                                    {% else %}
+                                        {{ circ.member.full_name }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ circ.checkout_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ circ.due_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ circ.return_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if circ.fine_amount > 0 %}
+                                        <span class="text-danger">${{ circ.fine_amount }}</span>
+                                        {% if circ.fine_paid %}
+                                            <span class="badge bg-success">Paid</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Unpaid</span>
+                                        {% endif %}
+                                    {% else %}
+                                        $0.00
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No loan history found.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

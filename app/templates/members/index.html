@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Members - Bibliotheca LMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Library Members</h1>
+    
+    {% if current_user.is_admin %}
+    <div>
+        <a href="{{ url_for('members.add') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus me-1"></i> Add New Member
+        </a>
+        <button class="btn btn-outline-secondary ms-2 btn-print">
+            <i class="fas fa-print me-1"></i> Print List
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <form action="{{ url_for('members.search') }}" method="get" class="d-flex">
+            <input type="text" name="query" class="form-control me-2" placeholder="Search by name, email or ID" value="{{ request.args.get('query', '') }}">
+            <button type="submit" class="btn btn-outline-primary">Search</button>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <select class="form-select" id="status-filter">
+            <option value="all">All Members</option>
+            <option value="active">Active Members</option>
+            <option value="inactive">Inactive Members</option>
+            <option value="admin">Administrators</option>
+            <option value="overdue">With Overdue Books</option>
+        </select>
+    </div>
+</div>
+
+{% if members %}
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Registered</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in members %}
+                            <tr class="member-item" 
+                                data-status="{{ 'active' if member.is_active else 'inactive' }}" 
+                                data-admin="{{ 'admin' if member.is_admin else '' }}"
+                                data-overdue="{{ 'overdue' if member.has_overdue_books else '' }}">
+                                <td>{{ member.member_id }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle-sm me-2">
+                                            <span class="avatar-initials-sm">{{ member.first_name[0] }}{{ member.last_name[0] }}</span>
+                                        </div>
+                                        {{ member.full_name }}
+                                    </div>
+                                </td>
+                                <td>{{ member.email }}</td>
+                                <td>{{ member.phone or '-' }}</td>
+                                <td>{{ member.registration_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if member.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                    
+                                    {% if member.is_admin %}
+                                        <span class="badge bg-primary">Admin</span>
+                                    {% endif %}
+                                    
+                                    {% if member.has_overdue_books %}
+                                        <span class="badge bg-warning">Overdue</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('members.view', member_id=member.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-user"></i>
+                                        </a>
+                                        <a href="{{ url_for('members.edit', member_id=member.id) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if current_user.id != member.id %}
+                                            <button type="button" class="btn btn-sm btn-danger toggle-status" 
+                                                data-bs-toggle="modal" data-bs-target="#statusModal"
+                                                data-member-id="{{ member.id }}"
+                                                data-member-name="{{ member.full_name }}"
+                                                data-current-status="{{ 'active' if member.is_active else 'inactive' }}">
+                                                {% if member.is_active %}
+                                                    <i class="fas fa-ban"></i>
+                                                {% else %}
+                                                    <i class="fas fa-check"></i>
+                                                {% endif %}
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <nav aria-label="Member pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('members.index', page=page-1) }}">Previous</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages+1) %}
+                        <li class="page-item {{ 'active' if p == page else '' }}">
+                            <a class="page-link" href="{{ url_for('members.index', page=p) }}">{{ p }}</a>
+                        </li>
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('members.index', page=page+1) }}">Next</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i> No members found.
+        {% if current_user.is_admin %}
+            <a href="{{ url_for('members.add') }}">Add your first member!</a>
+        {% endif %}
+    </div>
+{% endif %}
+
+<!-- Status Toggle Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusModalTitle">Change Member Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="statusModalMessage">Are you sure you want to change the status of this member?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="" method="post" id="statusForm">
+                    <button type="submit" class="btn btn-primary">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.avatar-circle-sm {
+    width: 30px;
+    height: 30px;
+    background-color: var(--bs-primary);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.avatar-initials-sm {
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status filter functionality
+        const statusFilter = document.getElementById('status-filter');
+        const memberItems = document.querySelectorAll('.member-item');
+        
+        if (statusFilter) {
+            statusFilter.addEventListener('change', function() {
+                const selectedStatus = this.value;
+                
+                memberItems.forEach(item => {
+                    if (selectedStatus === 'all') {
+                        item.style.display = '';
+                    } else if (selectedStatus === 'active') {
+                        item.style.display = item.dataset.status === 'active' ? '' : 'none';
+                    } else if (selectedStatus === 'inactive') {
+                        item.style.display = item.dataset.status === 'inactive' ? '' : 'none';
+                    } else if (selectedStatus === 'admin') {
+                        item.style.display = item.dataset.admin === 'admin' ? '' : 'none';
+                    } else if (selectedStatus === 'overdue') {
+                        item.style.display = item.dataset.overdue === 'overdue' ? '' : 'none';
+                    }
+                });
+            });
+        }
+        
+        // Status toggle modal
+        const statusModal = document.getElementById('statusModal');
+        const statusModalTitle = document.getElementById('statusModalTitle');
+        const statusModalMessage = document.getElementById('statusModalMessage');
+        const statusForm = document.getElementById('statusForm');
+        const toggleButtons = document.querySelectorAll('.toggle-status');
+        
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const memberId = this.dataset.memberId;
+                const memberName = this.dataset.memberName;
+                const currentStatus = this.dataset.currentStatus;
+                
+                const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+                const action = currentStatus === 'active' ? 'deactivate' : 'activate';
+                
+                statusModalTitle.textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} Member`;
+                statusModalMessage.textContent = `Are you sure you want to ${action} member ${memberName}?`;
+                statusForm.action = `/members/${memberId}/${action}`;
+            });
+        });
+    });
+</script>
+{% endblock %}

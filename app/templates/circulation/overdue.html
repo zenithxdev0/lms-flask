@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Overdue Books - Bibliotheca LMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('circulation.index') }}">Circulation</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Overdue Books</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>Overdue Books</h2>
+            <button class="btn btn-outline-light btn-print">
+                <i class="fas fa-print me-1"></i> Print Report
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if overdue_loans %}
+            <div class="mb-4">
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i> 
+                    Found <strong>{{ overdue_loans|length }}</strong> overdue books. 
+                    {% if current_user.is_admin %}
+                        Consider sending reminders to the respective members.
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Member</th>
+                            <th>Checkout Date</th>
+                            <th>Due Date</th>
+                            <th>Days Overdue</th>
+                            <th>Current Fine</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for circ in overdue_loans %}
+                            {% set days_overdue = (now - circ.due_date).days %}
+                            <tr class="{% if days_overdue > 30 %}table-danger{% elif days_overdue > 14 %}table-warning{% endif %}">
+                                <td>
+                                    <a href="{{ url_for('books.view', book_id=circ.book.id) }}">{{ circ.book.title }}</a>
+                                    <small class="text-muted d-block">{{ circ.book.author }}</small>
+                                </td>
+                                <td>
+                                    {% if current_user.is_admin %}
+                                        <a href="{{ url_for('members.view', member_id=circ.member.id) }}">{{ circ.member.full_name }}</a>
+                                        <small class="text-muted d-block">{{ circ.member.email }}</small>
+                                    {% else %}
+                                        {{ circ.member.full_name }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ circ.checkout_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ circ.due_date.strftime('%Y-%m-%d') }}</td>
+                                <td class="text-danger fw-bold">{{ days_overdue }} days</td>
+                                <td>
+                                    <span class="text-danger">${{ circ.calculate_fine() }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('circulation.return_book', circulation_id=circ.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-sign-in-alt"></i> Return
+                                    </a>
+                                    {% if current_user.is_admin %}
+                                        <button type="button" class="btn btn-sm btn-warning send-reminder"
+                                                data-member-name="{{ circ.member.full_name }}"
+                                                data-book-title="{{ circ.book.title }}"
+                                                data-member-email="{{ circ.member.email }}"
+                                                data-days-overdue="{{ days_overdue }}">
+                                            <i class="fas fa-envelope"></i> Send Reminder
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if current_user.is_admin %}
+                <div class="mt-4">
+                    <button type="button" class="btn btn-warning" id="send-all-reminders">
+                        <i class="fas fa-envelope me-1"></i> Send Reminders to All
+                    </button>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i> No overdue books found. Everything is returned on time!
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Send reminder functionality (would connect to a real email service in production)
+        const reminderButtons = document.querySelectorAll('.send-reminder');
+        
+        reminderButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const memberName = this.dataset.memberName;
+                const bookTitle = this.dataset.bookTitle;
+                const email = this.dataset.memberEmail;
+                const daysOverdue = this.dataset.daysOverdue;
+                
+                alert(`Reminder would be sent to ${memberName} (${email}) regarding "${bookTitle}" which is ${daysOverdue} days overdue.`);
+                
+                // In a real application, this would send an AJAX request to send the email
+                this.innerHTML = '<i class="fas fa-check"></i> Reminder Sent';
+                this.classList.replace('btn-warning', 'btn-success');
+                this.disabled = true;
+            });
+        });
+        
+        // Send all reminders button
+        const sendAllButton = document.getElementById('send-all-reminders');
+        if (sendAllButton) {
+            sendAllButton.addEventListener('click', function() {
+                if (confirm('Are you sure you want to send reminders to all members with overdue books?')) {
+                    // In a real application, this would send an AJAX request to send all emails
+                    
+                    reminderButtons.forEach(button => {
+                        button.innerHTML = '<i class="fas fa-check"></i> Reminder Sent';
+                        button.classList.replace('btn-warning', 'btn-success');
+                        button.disabled = true;
+                    });
+                    
+                    this.innerHTML = '<i class="fas fa-check"></i> All Reminders Sent';
+                    this.classList.replace('btn-warning', 'btn-success');
+                    this.disabled = true;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Book Inventory - Bibliotheca LMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Book Inventory</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Book Inventory</h2>
+            <button class="btn btn-outline-light btn-print">
+                <i class="fas fa-print me-1"></i> Print
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">Total Books</h5>
+                        <h2>{{ total_books }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">Unique Titles</h5>
+                        <h2>{{ unique_titles }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">Available</h5>
+                        <h2>{{ available_books }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">On Loan</h5>
+                        <h2>{{ on_loan }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <h3 class="mb-3">Books by Category</h3>
+        <div class="table-responsive mb-4">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Count</th>
+                        <th>Available</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category, count, available in categories %}
+                    <tr>
+                        <td>{{ category or 'Uncategorized' }}</td>
+                        <td>{{ count }}</td>
+                        <td>{{ available }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Book List -->
+        <h3 class="mb-3">Book Inventory List</h3>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Category</th>
+                        <th>ISBN</th>
+                        <th>Quantity</th>
+                        <th>Available</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in books %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('books.view', book_id=book.id) }}">{{ book.title }}</a>
+                        </td>
+                        <td>{{ book.author }}</td>
+                        <td>{{ book.category or 'Uncategorized' }}</td>
+                        <td>{{ book.isbn }}</td>
+                        <td>{{ book.quantity }}</td>
+                        <td>{{ book.available_quantity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

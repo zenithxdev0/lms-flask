@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout Book - Bibliotheca LMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('circulation.index') }}">Circulation</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0"><i class="fas fa-sign-out-alt me-2"></i>Checkout Book</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('circulation.checkout') }}">
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <h4>Book Information</h4>
+                    <div class="mb-3">
+                        <label for="book_id" class="form-label required-field">Select Book</label>
+                        <select class="form-select" id="book_id" name="book_id" required>
+                            <option value="">-- Select a book --</option>
+                            {% for book in books %}
+                                <option value="{{ book.id }}" {% if request.args.get('book_id')|int == book.id %}selected{% endif %}>
+                                    {{ book.title }} ({{ book.author }}) - Available: {{ book.available_quantity }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="isbn_search" class="form-label">Search by ISBN</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="isbn_search" placeholder="Enter ISBN">
+                            <button class="btn btn-outline-secondary" type="button" id="isbn_search_button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="book_details" class="card mb-3 d-none">
+                        <div class="card-body">
+                            <h5 id="selected_book_title" class="card-title"></h5>
+                            <p id="selected_book_author" class="card-text"></p>
+                            <p class="card-text">
+                                <strong>ISBN:</strong> <span id="selected_book_isbn"></span>
+                            </p>
+                            <p class="card-text">
+                                <strong>Available:</strong> <span id="selected_book_available" class="badge"></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <h4>Member Information</h4>
+                    <div class="mb-3">
+                        <label for="member_id" class="form-label required-field">Select Member</label>
+                        <select class="form-select" id="member_id" name="member_id" required>
+                            <option value="">-- Select a member --</option>
+                            {% for member in members %}
+                                <option value="{{ member.id }}">
+                                    {{ member.full_name }} ({{ member.member_id }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="member_search" class="form-label">Search by Member ID/Email</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="member_search" placeholder="Enter ID or Email">
+                            <button class="btn btn-outline-secondary" type="button" id="member_search_button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="member_details" class="card mb-3 d-none">
+                        <div class="card-body">
+                            <h5 id="selected_member_name" class="card-title"></h5>
+                            <p class="card-text">
+                                <strong>ID:</strong> <span id="selected_member_id"></span>
+                            </p>
+                            <p class="card-text">
+                                <strong>Email:</strong> <span id="selected_member_email"></span>
+                            </p>
+                            <p class="card-text">
+                                <strong>Current Loans:</strong> <span id="selected_member_loans"></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="due_date_offset" class="form-label">Loan Period</label>
+                        <select class="form-select" id="due_date_offset" name="due_date_offset">
+                            <option value="14" selected>2 weeks (default)</option>
+                            <option value="7">1 week</option>
+                            <option value="21">3 weeks</option>
+                            <option value="30">1 month</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('circulation.index') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">Checkout Book</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Book selection updates
+        const bookSelect = document.getElementById('book_id');
+        const bookDetails = document.getElementById('book_details');
+        const bookTitle = document.getElementById('selected_book_title');
+        const bookAuthor = document.getElementById('selected_book_author');
+        const bookISBN = document.getElementById('selected_book_isbn');
+        const bookAvailable = document.getElementById('selected_book_available');
+        
+        bookSelect.addEventListener('change', function() {
+            if (this.value) {
+                // Get selected option
+                const selectedOption = this.options[this.selectedIndex];
+                const bookInfo = selectedOption.text;
+                
+                // Extract details from option text
+                const titleAuthor = bookInfo.split(' (');
+                const title = titleAuthor[0];
+                const authorPart = titleAuthor[1].split(')')[0];
+                const available = bookInfo.split('Available: ')[1];
+                
+                // Update book details card
+                bookTitle.textContent = title;
+                bookAuthor.textContent = authorPart;
+                bookISBN.textContent = ""; // We don't have ISBN in the dropdown
+                bookAvailable.textContent = available;
+                
+                if (parseInt(available) > 0) {
+                    bookAvailable.className = "badge bg-success";
+                } else {
+                    bookAvailable.className = "badge bg-danger";
+                }
+                
+                bookDetails.classList.remove('d-none');
+            } else {
+                bookDetails.classList.add('d-none');
+            }
+        });
+        
+        // Member selection updates
+        const memberSelect = document.getElementById('member_id');
+        const memberDetails = document.getElementById('member_details');
+        const memberName = document.getElementById('selected_member_name');
+        const memberId = document.getElementById('selected_member_id');
+        const memberEmail = document.getElementById('selected_member_email');
+        const memberLoans = document.getElementById('selected_member_loans');
+        
+        memberSelect.addEventListener('change', function() {
+            if (this.value) {
+                // Get selected option
+                const selectedOption = this.options[this.selectedIndex];
+                const memberInfo = selectedOption.text;
+                
+                // Extract details from option text
+                const nameParts = memberInfo.split(' (');
+                const name = nameParts[0];
+                const id = nameParts[1].split(')')[0];
+                
+                // Update member details card
+                memberName.textContent = name;
+                memberId.textContent = id;
+                memberEmail.textContent = ""; // We don't have email in the dropdown
+                memberLoans.textContent = "Loading...";
+                
+                memberDetails.classList.remove('d-none');
+                
+                // We could fetch additional member details here via AJAX
+            } else {
+                memberDetails.classList.add('d-none');
+            }
+        });
+        
+        // Trigger change event if book_id is set in the URL (from a link)
+        if (bookSelect.value) {
+            bookSelect.dispatchEvent(new Event('change'));
+        }
+    });
+</script>
+{% endblock %}

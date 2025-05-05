@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - Bibliotheca LMS{% endblock %}
+
+{% block content %}
+<div class="container text-center my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="display-1 text-muted">404</h1>
+            <h2 class="mb-4">Page Not Found</h2>
+            <p class="lead mb-4">The page you're looking for doesn't exist or has been moved.</p>
+            <img src="{{ url_for('static', filename='img/book-not-found.svg') }}" alt="Book not found" class="img-fluid mb-4" style="max-height: 200px;">
+            <div>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>Return to Home Page
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
