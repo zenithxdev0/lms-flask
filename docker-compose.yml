@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      # Use named volumes instead of direct bind mounts for better cross-platform compatibility
+      - ./app:/app/app
+      - ./run.py:/app/run.py
+      - ./seed_db.py:/app/seed_db.py
+      - db_data:/app/instance
+    environment:
+      - FLASK_APP=run.py
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - DATABASE_URL=sqlite:////app/instance/bibliotheca.db
+    restart: unless-stopped
+    # Use healthcheck to ensure the application is running properly
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    command: gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 2 --reload run:app
+
+volumes:
+  db_data:
+    # Use a named volume for database persistence
+    driver: local

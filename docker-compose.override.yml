@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web:
+    # Development-specific settings
+    volumes:
+      - ./app:/app/app:delegated
+      - ./run.py:/app/run.py:delegated
+      - ./seed_db.py:/app/seed_db.py:delegated
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    command: gunicorn --bind 0.0.0.0:5000 --workers 1 --threads 2 --reload run:app

@@ -97,6 +97,93 @@ Bibliotheca is a comprehensive library management system built with Flask that h
    - Admin User: admin@example.com / admin123
    - Regular User: john@example.com / password123
 
+## Docker Setup Instructions
+
+This application has been containerized with Docker to make it easy to run in any environment (Mac, Windows, or Linux).
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Development Environment
+
+To run the application in development mode:
+
+```bash
+# Start the application
+docker-compose up
+
+# Start in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the application
+docker-compose down
+```
+
+The application will be available at http://localhost:5000
+
+### Production Environment
+
+To run the application in production mode:
+
+```bash
+# Start the production stack with Nginx
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Stop the production stack
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+```
+
+The application will be available at http://localhost:80
+
+### Database Management
+
+```bash
+# To access the database shell
+docker-compose exec web flask shell
+
+# To run database migrations
+docker-compose exec web flask db upgrade
+
+# To seed the database with sample data
+docker-compose exec web python seed_db.py
+```
+
+### Volumes
+
+The application uses Docker volumes to persist data:
+
+- `db_data`: Stores the SQLite database file
+
+### Environment-Specific Configs
+
+- Development: Uses `docker-compose.override.yml` (automatically applied)
+- Production: Uses `docker-compose.prod.yml` (must be explicitly included)
+
+### Cross-Platform Considerations
+
+- On Windows, ensure Docker is using WSL2 backend for best performance
+- On macOS, the `:delegated` volume mounts improve performance
+- On all platforms, database files are stored in Docker volumes for data persistence
+
+## Application Access
+
+- Development: http://localhost:5000
+- Production: http://localhost:80
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Check the container logs: `docker-compose logs`
+2. Ensure the correct ports are exposed
+3. Verify the database file exists in the volume
+4. Try rebuilding the container: `docker-compose build --no-cache`
+
 ## Project Structure
 
 ```
