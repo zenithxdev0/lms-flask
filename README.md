@@ -3,46 +3,65 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-v3.12-blue.svg)
 ![Flask](https://img.shields.io/badge/flask-v2.3.2-green.svg)
+![Docker](https://img.shields.io/badge/docker-supported-blue.svg)
 
 Bibliotheca is a comprehensive library management system built with Flask that helps librarians manage their collections, track circulation, and maintain member records efficiently.
 
-![Library Management System](app/static/img/library-screenshot.jpg)
+## Screenshots
 
-## Features
+### Dashboard
+![Dashboard](app/static/img/screenshots/Screenshot%202025-05-06%20at%2015.53.27.png)
 
-- **Book Management**
-  - Add, edit, and remove books from the library collection
-  - Track book details including title, author, ISBN, genre, and more
-  - Manage book quantities and locations
+### Member Profile
+![Member Profile](app/static/img/screenshots/screencapture-127-0-0-1-5000-members-1-2025-05-06-15_57_02.png)
 
-- **Member Management**
-  - Register new members and maintain their profiles
-  - Track contact information and membership status
-  - Monitor checkout history and current loans
+### Adding a New Book
+![Add Book](app/static/img/screenshots/screencapture-127-0-0-1-5000-books-add-2025-05-06-15_57_23.png)
 
-- **Circulation**
-  - Process book checkouts and returns
-  - Track due dates and calculate late fees automatically
-  - Send notifications for overdue items (optional)
+### Book Checkout
+![Book Checkout](app/static/img/screenshots/screencapture-127-0-0-1-5000-circulation-checkout-2025-05-06-15_57_36.png)
 
-- **Reporting**
-  - Generate circulation statistics
-  - Inventory reports and book status
-  - Overdue book reports and fine collection tracking
+### Reports
+![Reports](app/static/img/screenshots/Screenshot%202025-05-06%20at%2015.55.24.png)
 
-- **User-friendly Interface**
-  - Responsive design for desktop and mobile
-  - Search functionality for books and members
-  - Role-based access control (admin/staff/members)
+## Installation Options
 
-## Installation
+### Option 1: Docker Installation (Recommended)
 
-### Prerequisites
+The easiest way to run Bibliotheca across any platform (Windows, macOS, or Linux) is with Docker.
+
+#### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+#### Quick Start with Docker
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/bibliotheca.git
+   cd bibliotheca
+   ```
+
+2. **Start the application**
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Access the application**
+   Open your browser and navigate to http://localhost:5000
+
+4. **Default login credentials**
+   - Admin User: admin@example.com / admin123
+   - Regular User: john@example.com / password123
+
+### Option 2: Traditional Installation
+
+#### Prerequisites
 - Python 3.10 or higher
 - pip (Python package installer)
 - Git
 
-### Setup Instructions
+#### Setup Instructions
 
 1. **Clone the repository**
    ```bash
@@ -83,35 +102,47 @@ Bibliotheca is a comprehensive library management system built with Flask that h
    python seed_db.py
    ```
 
-## Running the Application
-
-1. **Start the development server**
+6. **Start the development server**
    ```bash
    python run.py
    ```
 
-2. **Access the application**
+7. **Access the application**
    Open your browser and navigate to http://localhost:5000
 
-3. **Default login credentials** (if using seed_db.py)
-   - Admin User: admin@example.com / admin123
-   - Regular User: john@example.com / password123
+## Features
 
-## Docker Setup Instructions
+- **Book Management**
+  - Add, edit, and remove books from the library collection
+  - Track book details including title, author, ISBN, genre, and more
+  - Manage book quantities and locations
 
-This application has been containerized with Docker to make it easy to run in any environment (Mac, Windows, or Linux).
+- **Member Management**
+  - Register new members and maintain their profiles
+  - Track contact information and membership status
+  - Monitor checkout history and current loans
 
-### Prerequisites
+- **Circulation**
+  - Process book checkouts and returns
+  - Track due dates and calculate late fees automatically
+  - Send notifications for overdue items (optional)
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+- **Reporting**
+  - Generate circulation statistics
+  - Inventory reports and book status
+  - Overdue book reports and fine collection tracking
+
+- **User-friendly Interface**
+  - Responsive design for desktop and mobile
+  - Search functionality for books and members
+  - Role-based access control (admin/staff/members)
+
+## Detailed Docker Guide
 
 ### Development Environment
 
-To run the application in development mode:
-
 ```bash
-# Start the application
+# Start the application with live reload
 docker-compose up
 
 # Start in detached mode
@@ -124,11 +155,7 @@ docker-compose logs -f
 docker-compose down
 ```
 
-The application will be available at http://localhost:5000
-
 ### Production Environment
-
-To run the application in production mode:
 
 ```bash
 # Start the production stack with Nginx
@@ -137,8 +164,6 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 # Stop the production stack
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
 ```
-
-The application will be available at http://localhost:80
 
 ### Database Management
 
@@ -153,36 +178,79 @@ docker-compose exec web flask db upgrade
 docker-compose exec web python seed_db.py
 ```
 
-### Volumes
+### Container Management
 
-The application uses Docker volumes to persist data:
+```bash
+# Rebuild containers (after making changes)
+docker-compose build --no-cache
 
-- `db_data`: Stores the SQLite database file
+# View running containers
+docker-compose ps
 
-### Environment-Specific Configs
+# Execute a command in the web container
+docker-compose exec web <command>
 
-- Development: Uses `docker-compose.override.yml` (automatically applied)
-- Production: Uses `docker-compose.prod.yml` (must be explicitly included)
+# View container logs
+docker-compose logs -f web
+```
+
+### Docker Configuration Files
+
+- **docker-compose.yml**: Base configuration
+- **docker-compose.override.yml**: Development-specific settings (auto-applied)
+- **docker-compose.prod.yml**: Production settings with Nginx
+- **Dockerfile**: Container build instructions
+- **.dockerignore**: Files excluded from the container
+
+### Environment Configurations
+
+- **Development**:
+  - Flask debug mode enabled
+  - Code hot-reloading
+  - Single worker for easier debugging
+
+- **Production**:
+  - Nginx for serving static files and load balancing
+  - Multiple Gunicorn workers for performance
+  - Debug mode disabled
+  - Optimized settings for production use
 
 ### Cross-Platform Considerations
 
-- On Windows, ensure Docker is using WSL2 backend for best performance
-- On macOS, the `:delegated` volume mounts improve performance
-- On all platforms, database files are stored in Docker volumes for data persistence
+- **Windows**: For best performance, ensure Docker is using WSL2 backend
+- **macOS**: The `:delegated` volume mounts improve filesystem performance
+- **Linux**: Works natively with optimal performance
+- **All platforms**: Database persistence via Docker volumes
 
-## Application Access
+### Troubleshooting Docker Issues
 
-- Development: http://localhost:5000
-- Production: http://localhost:80
+1. **Ports in use**:
+   ```bash
+   # Check if ports are in use
+   lsof -i :5000
+   # Stop the container and change the port in docker-compose.yml
+   ```
 
-## Troubleshooting
+2. **Database access issues**:
+   ```bash
+   # Check database volume
+   docker volume ls
+   # Inspect volume 
+   docker volume inspect lms_db_data
+   ```
 
-If you encounter issues:
+3. **Container won't start**:
+   ```bash
+   # Check for errors
+   docker-compose logs web
+   ```
 
-1. Check the container logs: `docker-compose logs`
-2. Ensure the correct ports are exposed
-3. Verify the database file exists in the volume
-4. Try rebuilding the container: `docker-compose build --no-cache`
+4. **Rebuild from scratch**:
+   ```bash
+   docker-compose down -v
+   docker-compose build --no-cache
+   docker-compose up -d
+   ```
 
 ## Project Structure
 
@@ -196,27 +264,14 @@ bibliotheca/
 │   ├── static/              # Static files (CSS, JS, images)
 │   ├── templates/           # Jinja2 templates
 │   └── utils/               # Utility functions
-├── migrations/              # Database migrations
-├── .env.example             # Example environment variables
-├── .gitignore               # Git ignore file
+├── docker-compose.yml       # Base Docker configuration
+├── docker-compose.override.yml # Development Docker settings
+├── docker-compose.prod.yml  # Production Docker settings
+├── Dockerfile               # Docker container definition
+├── nginx/                   # Nginx configuration for production
 ├── requirements.txt         # Python dependencies
 ├── run.py                   # Application entry point
 └── seed_db.py               # Database seeding script
-```
-
-## Deployment
-
-For production deployment:
-
-1. Set `DEBUG=False` in your .env file
-2. Use a production WSGI server like Gunicorn
-3. Set up a reverse proxy with Nginx or Apache
-4. Use a PostgreSQL database instead of SQLite
-
-Example deployment with Gunicorn:
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:8000 "app:create_app()"
 ```
 
 ## Contributing
@@ -240,3 +295,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - SQLAlchemy ORM
 - Bootstrap for frontend styling
 - Font Awesome for icons
+- Docker for containerization
