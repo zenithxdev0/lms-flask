@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Add Member - Bibliotheca LMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Add New Member</h2>
+                <a href="{{ url_for('members.index') }}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Members
+                </a>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('members.add') }}">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label required-field">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ request.form.first_name or '' }}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label required-field">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ request.form.last_name or '' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label required-field">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ request.form.email or '' }}" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ request.form.phone or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="2">{{ request.form.address or '' }}</textarea>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label required-field">Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text password-requirements">
+                                Password must be at least 8 characters and include letters and numbers.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin-only options -->
+                    <div class="mb-3 border p-3 bg-light rounded">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                            <label class="form-check-label" for="is_active">
+                                <strong>Account Active</strong> - Member can log in and borrow books
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin">
+                            <label class="form-check-label" for="is_admin">
+                                <strong>Administrator</strong> - Member has full administrative privileges
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('members.index') }}" class="btn btn-outline-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i> Add Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle password visibility
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+        });
+        
+        // Password validation
+        const password = document.getElementById('password');
+        const passwordRequirements = document.querySelector('.password-requirements');
+        
+        function validatePassword() {
+            // Check password length and complexity
+            const isLongEnough = password.value.length >= 8;
+            const hasLetters = /[a-zA-Z]/.test(password.value);
+            const hasNumbers = /[0-9]/.test(password.value);
+            
+            if (isLongEnough && hasLetters && hasNumbers) {
+                password.classList.remove('is-invalid');
+                password.classList.add('is-valid');
+                passwordRequirements.classList.remove('text-danger');
+                passwordRequirements.classList.add('text-success');
+            } else {
+                password.classList.remove('is-valid');
+                password.classList.add('is-invalid');
+                passwordRequirements.classList.remove('text-success');
+                passwordRequirements.classList.add('text-danger');
+            }
+        }
+        
+        password.addEventListener('input', validatePassword);
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .required-field::after {
+        content: "*";
+        color: red;
+        margin-left: 4px;
+    }
+</style>
+{% endblock %}

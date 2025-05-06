@@ -85,7 +85,12 @@
                 <h4 class="mb-0">Current Loans</h4>
             </div>
             <div class="card-body">
-                {% set active_loans = [c for c in member.circulations if c.return_date is none] %}
+                {% set active_loans = [] %}
+                {% for c in member.circulations %}
+                    {% if c.return_date is none %}
+                        {% set active_loans = active_loans.append(c) or active_loans %}
+                    {% endif %}
+                {% endfor %}
                 
                 {% if active_loans %}
                     <div class="table-responsive">
@@ -149,7 +154,12 @@
                 <h4 class="mb-0">Loan History</h4>
             </div>
             <div class="card-body">
-                {% set past_loans = [c for c in member.circulations if c.return_date is not none] %}
+                {% set past_loans = [] %}
+                {% for c in member.circulations %}
+                    {% if c.return_date is not none %}
+                        {% set past_loans = past_loans.append(c) or past_loans %}
+                    {% endif %}
+                {% endfor %}
                 
                 {% if past_loans %}
                     <div class="table-responsive">
@@ -206,9 +216,13 @@
         
         {% if current_user.is_admin %}
             {% set total_borrowed = member.circulations|length %}
-            {% set total_overdue = [c for c in member.circulations if c.return_date and c.return_date > c.due_date]|length %}
+            {% set total_overdue = 0 %}
             {% set total_fines = namespace(amount=0) %}
+            
             {% for c in member.circulations %}
+                {% if c.return_date and c.return_date > c.due_date %}
+                    {% set total_overdue = total_overdue + 1 %}
+                {% endif %}
                 {% if c.fine_amount %}
                     {% set total_fines.amount = total_fines.amount + c.fine_amount %}
                 {% endif %}

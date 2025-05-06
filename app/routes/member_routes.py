@@ -10,9 +10,101 @@ members_bp = Blueprint('members', __name__, url_prefix='/members')
 @members_bp.route('/')
 @login_required
 def index():
-    """List all members"""
-    members = Member.query.all()
-    return render_template('members/index.html', members=members)
+    """List all members with pagination"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of items per page
+    
+    # Get paginated members
+    pagination = Member.query.paginate(page=page, per_page=per_page, error_out=False)
+    members = pagination.items
+    total_pages = pagination.pages
+    
+    return render_template(
+        'members/index.html', 
+        members=members, 
+        page=page, 
+        total_pages=total_pages
+    )
+
+@members_bp.route('/add', methods=['GET', 'POST'])
+@login_required
+def add():
+    """Add a new member - admin only"""
+    if not current_user.is_admin:
+        flash('You do not have permission to add members.', 'danger')
+        return redirect(url_for('members.index'))
+        
+    if request.method == 'POST':
+        # Extract form data
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        phone = request.form.get('phone')
+        address = request.form.get('address')
+        is_active = 'is_active' in request.form
+        is_admin = 'is_admin' in request.form
+        
+        # Check if email already exists
+        existing_member = Member.query.filter_by(email=email).first()
+        if existing_member:
+            flash('Email already registered.', 'danger')
+            return redirect(url_for('members.add'))
+        
+        # Generate a unique member ID
+        member_id = f"MEM{uuid.uuid4().hex[:8].upper()}"
+        
+        # Create new member
+        new_member = Member(
+            member_id=member_id,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password_hash=generate_password_hash(password),
+            phone=phone,
+            address=address,
+            is_active=is_active,
+            is_admin=is_admin
+        )
+        
+        # Save to database
+        db.session.add(new_member)
+        db.session.commit()
+        
+        flash('Member added successfully!', 'success')
+        return redirect(url_for('members.view', member_id=new_member.id))
+    
+    return render_template('members/add.html')
+
+@members_bp.route('/search')
+@login_required
+def search():
+    """Search for members"""
+    query = request.args.get('query', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of items per page
+    
+    if query:
+        search_term = f"%{query}%"
+        pagination = Member.query.filter(
+            (Member.first_name.ilike(search_term)) |
+            (Member.last_name.ilike(search_term)) |
+            (Member.email.ilike(search_term)) |
+            (Member.member_id.ilike(search_term))
+        ).paginate(page=page, per_page=per_page, error_out=False)
+    else:
+        pagination = Member.query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    members = pagination.items
+    total_pages = pagination.pages
+    
+    return render_template(
+        'members/index.html', 
+        members=members, 
+        page=page, 
+        total_pages=total_pages,
+        search_query=query
+    )
 
 @members_bp.route('/<int:member_id>')
 @login_required
